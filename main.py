@@ -9,13 +9,16 @@ def process_invoice(image_path):
 	
 	return structured_invoice
 	
+	
 if __name__ == "__main__":
 	invoice_path = "/home/pi/Downloads/Invoice ADVANTECH CO. MALAYSIA SDN BHD MY01202500953954460001.pdf"
 	invoice_json = process_invoice(invoice_path)
+	print(invoice_json)
 	
 	invoice_name = os.path.splitext(os.path.basename(invoice_path))[0]
 	output_path = f"/home/pi/Downloads/{invoice_name}.json"
-	
+    
+    # Save the JSON string to a file directly
 	with open(output_path, "w", encoding="utf-8") as json_file:
-		json.dump(invoice_json, json_file, ensure_ascii=False, indent=4)
+		json_file.write(invoice_json)  # Write the JSON string to the file
 	
