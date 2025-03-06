@@ -16,14 +16,18 @@ def extract_text_from_invoice(image_path):
 	)
 
 # 取得 OCR 文字
-
+    # Output raw blocks to check if any Chinese text is being extracted
+	for block in response["Blocks"]:
+		if block["BlockType"] == "LINE":
+			print(block["Text"])
+            
 	ocr_text = " ".join(
 		[block["Text"] for block in response["Blocks"] if block["BlockType"] == "LINE"]
 	)
 	return ocr_text
 	
 if __name__ == "__main__":
-	image_path = "/home/pi/Downloads/Invoice ADVANTECH CO. MALAYSIA SDN BHD MY01202500953954460001.pdf"
+	image_path = "/home/pi/Downloads/發票明細(示意圖)_MF57558922_20250303184623865.pdf"
 	ocr_result= extract_text_from_invoice(image_path)
 	
-	print(ocr_result)
+	print(f"{ocr_result}取得 OCR 文字")
