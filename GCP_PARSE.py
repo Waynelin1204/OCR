@@ -8,7 +8,7 @@ PROCESSOR_ID = "1134bfc5d82d7bf6"
 # 設定 LLM 提示詞（Prompt），要求 AI 解析發票欄位
 def process_invoice(image_path):
     client = documentai.DocumentProcessorServiceClient()
-    name =  f"project/{PROJECT_ID}/location/{LOCATION}/processors/{PROCESSOR_ID}"
+    name =  f"projects/{PROJECT_ID}/locations/{LOCATION}/processors/{PROCESSOR_ID}"
     with open(image_path, 'rb') as img:
         image_content = img.read()
         
