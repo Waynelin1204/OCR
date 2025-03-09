@@ -43,14 +43,27 @@ def scan_invoice_qr(image_path):
         return None, None
 
  
+    qr_data_list = sorted(qr_codes, key=lambda qr: qr.rect.left)  # Sort by X-axis
 
     # 根據 QR Code 位置判斷左右（通常較左側的是發票資訊，右側是品項）
 
-    qr_data_list = sorted(qr_codes, key=lambda qr: qr.rect.left)  # 依 X 軸座標排序
 
-    left_qr_data = qr_data_list[0].data.decode("utf-8").strip()
+    
 
-    right_qr_data = qr_data_list[1].data.decode("utf-8").strip()
+
+    if len(qr_data_list) == 1: 
+        left_qr_data = qr_data_list[0].data.decode("utf-8").strip()
+        right_qr_data = ""
+
+
+    elif len(qr_data_list) == 2: 
+        left_qr_data = qr_data_list[0].data.decode("utf-8").strip()
+        right_qr_data = qr_data_list[1].data.decode("utf-8").strip()
+        if right_qr_data == "**":
+            right_qr_data = ""
+    else:
+        left_qr_data = ""
+        right_qr_data = ""
 
  
 
@@ -118,37 +131,29 @@ def right_parse_invoice_items(qr_data):
 
 if __name__ == "__main__":
 
-    image_path="/home/pi/Downloads/收據_2025-03-08_123011_2.jpg"  # 發票圖片路徑
-
- 
+    image_path="/home/pi/Downloads/收據_2025-03-08_120518_1.jpeg"  # 發票圖片路徑
 
     left_qr, right_qr = scan_invoice_qr(image_path)
 
- 
-
-    if left_qr and right_qr:
-
         # 嘗試解碼（如果是 Base64）
 
-        right_qr_decoded = decode_base64_if_needed(right_qr)
-        left_qr_decoded = decode_base64_if_needed(left_qr)
+    #right_qr_decoded = decode_base64_if_needed(right_qr)
+    #left_qr_decoded = decode_base64_if_needed(left_qr)
         
-        total_qr_decoded = f"{left_qr_decoded}{right_qr_decoded}"
+    total_qr_decoded = f"{left_qr}{right_qr}"
         
-
-        print(total_qr_decoded)
- 
 
         # 解析發票品項
 
-        total_invoice_items = right_parse_invoice_items(total_qr_decoded)
+    total_invoice_items = right_parse_invoice_items(total_qr_decoded)
+        
 
  
 
         # JSON 格式輸出
 
-        invoice_json = json.dumps({"品項": total_invoice_items}, indent=4, ensure_ascii=False)
+    invoice_json = json.dumps({"品項": total_invoice_items}, indent=4, ensure_ascii=False)
 
-        print("📄 發票品項解析結果：")
+    print("📄 發票品項解析結果：")
 
-        print(invoice_json)
+    print(invoice_json)
