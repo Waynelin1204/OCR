@@ -7,8 +7,7 @@ import cv2
 from pyzbar.pyzbar import decode
 
 from OCR import detect_text
-from datetime import datetime
-from e_invoices.models  import OCR, OCRItem  # Replace 'myapp' with your actual Django app name
+
  
 
 # 初始化 Bedrock Client
@@ -192,16 +191,23 @@ def scan_qr_code(image_path):
 def validate_and_replace_items(parsed_invoice, image_path):
 
     """ 如果 AI 無法解析品項，則改用 QR Code 解析 """
+
     if not parsed_invoice:
 
         print("❌ AI 解析失敗，無法處理發票")
 
         return None
+
+ 
+
     # 判斷是否需要替換品項
 
     if parsed_invoice.get("品名、數量、單價、總計") in (None, [{"品名": None, "數量": None, "單價": None, "總計": None}]):
 
         print("⚠️ AI 解析發票品項失敗，改用 QR Code 解析")
+
+       
+
         qr_items = scan_qr_code(image_path)
 
         if qr_items:
@@ -212,60 +218,31 @@ def validate_and_replace_items(parsed_invoice, image_path):
 
             print("⚠️ 無法解析 QR Code，品項資訊仍然為空")
 
+ 
 
     return parsed_invoice
 
-def save_invoice_to_db(invoice_data):
-    """ 保存解析後的發票 JSON 到資料庫 """
-
-    if not invoice_data:
-        print("❌ 無效的發票數據，無法存入資料庫")
-        return None
-
-    try:
-        # 確保日期格式正確
-        #invoice_date = datetime.strptime(invoice_data.get("發票日期"), "%Y-%m-%d").date() if invoice_data.get("發票日期") else None
-
-        # 儲存發票
-        OCR = OCR.objects.create(
-            invoice_number=invoice_data.get("發票號碼"),
-            random_code=invoice_data.get("隨機碼"),
-            invoice_date=invoice_date,
-            buyer_tax_id=invoice_data.get("買方統一編號"),
-            seller_tax_id=invoice_data.get("賣方統一編號"),
-            total_amount=invoice_data.get("總金額", 0),
-            tax_amount=invoice_data.get("稅額"),
-        )
-
-        # 儲存發票品項
-        for item in parsed_invoice.get("品名、數量、單價、總計", []):
-            OCRItem.objects.create(
-                OCR=OCR,
-                product_name=item.get("品名", "未命名"),
-                quantity=item.get("數量", "1"), 
-                unit_price=item.get("單價", 0),
-            )
-
-        print(f"✅ 發票 {invoice.invoice_number} 已成功存入資料庫！")
-        return invoice
-
-    except Exception as e:
-        print(f"❌ 儲存發票時發生錯誤: {e}")
-        return None
-
+ 
 
 if __name__ == "__main__":
 
-    image_path = "/home/pi/OCR/Samples/sample6.jpeg"
+    image_path = "/home/pi/Downloads/收據_2025-03-08_123011.jpeg"
+
+   
 
     # 1️⃣ OCR + Bedrock 解析
+
     invoice_json = parse_invoice_with_bedrock(image_path)
 
+ 
+
     # 2️⃣ 若 AI 解析失敗，則改用 QR Code 補充
+
     final_invoice = validate_and_replace_items(invoice_json, image_path)
     
-    # 3️⃣ 將發票數據存入資料庫
-    save_invoice_to_db(final_invoice)
+
+ 
 
     # 3️⃣ 輸出結果
+
     print(json.dumps(final_invoice, ensure_ascii=False, indent=4))
