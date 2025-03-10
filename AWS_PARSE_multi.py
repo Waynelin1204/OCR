@@ -8,7 +8,7 @@ from pyzbar.pyzbar import decode
 
 from OCR import detect_text
 
- 
+import os 
 
 # 初始化 Bedrock Client
 
@@ -222,27 +222,40 @@ def validate_and_replace_items(parsed_invoice, image_path):
 
     return parsed_invoice
 
- 
+def save_invoice_as_json(invoice_data, image_path):
+    """ Save the invoice data as a JSON file in the same folder as the image """
+    if invoice_data:
+        # Get the image filename without extension
+        image_name = os.path.splitext(os.path.basename(image_path))[0]
+        json_filename = f"{image_name}_invoice.json"
+        json_filepath = os.path.join(os.path.dirname(image_path), json_filename)
+
+        with open(json_filepath, "w", encoding="utf-8") as json_file:
+            json.dump(invoice_data, json_file, ensure_ascii=False, indent=4)
+
+        print(f"✅ Invoice data saved to {json_filepath}")
+    else:
+        print("❌ No data to save.") 
 
 if __name__ == "__main__":
 
-    image_path = "/home/pi/Downloads/收據_2025-03-08_123011.jpeg"
+    folder_path = "/home/pi/OCR/Samples"  # Path to the folder with images
 
-   
+    # Loop through all files in the Samples folder
+    for filename in os.listdir(folder_path):
+        if filename.lower().endswith(('.jpeg', '.jpg', '.png', 'pdf')):  # Check if the file is an image
+            image_path = os.path.join(folder_path, filename)
 
-    # 1️⃣ OCR + Bedrock 解析
+            print(f"🖼️ Analyzing {filename}...")
 
-    invoice_json = parse_invoice_with_bedrock(image_path)
+            # 1️⃣ OCR + Bedrock parsing
+            invoice_json = parse_invoice_with_bedrock(image_path)
 
- 
+            # 2️⃣ If AI parsing fails, replace with QR Code
+            final_invoice = validate_and_replace_items(invoice_json, image_path)
 
-    # 2️⃣ 若 AI 解析失敗，則改用 QR Code 補充
+            # 3️⃣ Output the result (printed to console)
+            print(json.dumps(final_invoice, ensure_ascii=False, indent=4))
 
-    final_invoice = validate_and_replace_items(invoice_json, image_path)
-    
-
- 
-
-    # 3️⃣ 輸出結果
-
-    print(json.dumps(final_invoice, ensure_ascii=False, indent=4))
+            # 4️⃣ Save the result as a JSON file in the same folder
+            save_invoice_as_json(final_invoice, image_path)
